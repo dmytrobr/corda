@@ -12,7 +12,6 @@ import org.assertj.core.api.Assertions
 import java.io.NotSerializableException
 import kotlin.test.assertEquals
 
-
 class CorDappSerializerTests {
     data class NeedsProxy (val a: String)
 
