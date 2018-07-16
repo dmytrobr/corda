@@ -28,11 +28,14 @@ class FailNodeOnNotMigratedAttachmentContractsTableNameTests {
         `node fails when not detecting compatible table name`("NODE_ATTACHMENTS_CONTRACTS", "NODE_ATTCHMENTS_CONTRACTS")
     }
 
-    fun `node fails when not detecting compatible table name`(tableNameFromMapping: String, tableNameInDB: String) {
+    private fun `node fails when not detecting compatible table name`(tableNameFromMapping: String, tableNameInDB: String) {
         val user = User("mark", "dadada", setOf(Permissions.startFlow<SendMessageFlow>(), Permissions.invokeRpc("vaultQuery")))
         val message = Message("Hello world!")
-        val baseDir: Path = driver(DriverParameters(inMemoryDB = false, startNodesInProcess = isQuasarAgentSpecified(),
-                portAllocation = RandomFree, extraCordappPackagesToScan = listOf(MessageState::class.packageName))) {
+        val baseDir: Path = driver(DriverParameters(
+                inMemoryDB = false,
+                startNodesInProcess = isQuasarAgentSpecified(),
+                extraCordappPackagesToScan = listOf(MessageState::class.packageName)
+        )) {
             val (nodeName, baseDir) = {
                 val nodeHandle = startNode(rpcUsers = listOf(user)).getOrThrow()
                 val nodeName = nodeHandle.nodeInfo.singleIdentity().name
