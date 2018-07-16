@@ -74,14 +74,16 @@ data class StateConsumptionDetails @JvmOverloads constructor(
         val hashOfTransactionId: SecureHash,
 
         /**
-         * The type of consumed state: Either an reference input state or a regular input state.
+         * The type of consumed state: Either a reference input state or a regular input state.
          */
         val type: ConsumedStateType = ConsumedStateType.INPUT_STATE
 ) {
+
+    @CordaSerializable
+    enum class ConsumedStateType { INPUT_STATE, REFERENCE_INPUT_STATE }
+
     fun copy(hashOfTransactionId: SecureHash): StateConsumptionDetails {
         return StateConsumptionDetails(hashOfTransactionId, type)
     }
 }
 
-@CordaSerializable
-enum class ConsumedStateType { INPUT_STATE, REFERENCE_INPUT_STATE }

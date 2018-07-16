@@ -401,6 +401,15 @@ abstract class FlowLogic<out T> {
         return stateMachine.suspend(request, maySkipCheckpoint = maySkipCheckpoint)
     }
 
+    /**
+     * Suspends the current flow until all the provided [StateRef]s have been updated.
+     *
+     * WARNING! Remember that the flow which uses this async operation will _NOT_ wake-up until all the supplied StateRefs
+     * have been updated. If the node isn't aware of the supplied StateRefs or if the StateRefs are never updated, then
+     * the calling flow will remain suspended.
+     *
+     * @param stateRefs the StateRefs which will be updated in the future.
+     */
     @Suspendable
     fun waitForStatesToUpdate(stateRefs: Set<StateRef>) = executeAsync(WaitForStatesToUpdate(stateRefs, serviceHub))
 

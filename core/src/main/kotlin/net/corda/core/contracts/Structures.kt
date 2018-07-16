@@ -176,7 +176,6 @@ data class StateAndRef<out T : ContractState>(val state: TransactionState<T>, va
 // DOCEND 7
 
 /** A wrapper for a [StateAndRef] indicating that it should be added to a transaction as a reference input state. */
-@CordaSerializable
 data class ReferencedStateAndRef<out T : ContractState>(val stateAndRef: StateAndRef<T>)
 
 /** Filters a list of [StateAndRef] objects according to the type of the states */

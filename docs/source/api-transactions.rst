@@ -95,9 +95,10 @@ Reference input states
 ~~~~~~~~~~~~~~~~~~~~~~
 
 A reference input state is a ``ContractState`` which can be referred to in a transaction by the contracts of input and
-output states but whose contract is not executed as part of the transaction verification process and is not consumed
-when the transaction is committed to the ledger but is checked for "current-ness". In other words, the contract logic
-isn't run for the referencing transaction only. It's still a normal state when it occurs in an input or output position.
+output states but whose contract is not executed as part of the transaction verification process. Furthermore,
+reference states are not consumed when the transaction is committed to the ledger but they are checked for
+"current-ness". In other words, the contract logic isn't run for the referencing transaction only. It's still a normal
+state when it occurs in an input or output position.
 
 Reference data states enable many parties to "reuse" the same state in their transactions as reference data whilst
 still allowing the reference data state owner the capability to update the state.
@@ -105,6 +106,8 @@ still allowing the reference data state owner the capability to update the state
 A reference input state is added to a transaction as a ``ReferencedStateAndRef``. A ``ReferencedStateAndRef`` can be
 obtained from a ``StateAndRef`` by calling the ``StateAndRef.referenced()`` method which returns a
 ``ReferencedStateAndRef``.
+
+.. warning:: Reference states are only available on Corda networks with a minimump platform version >= 4.
 
 .. container:: codeset
 
@@ -119,6 +122,21 @@ obtained from a ``StateAndRef`` by calling the ``StateAndRef.referenced()`` meth
             :start-after: DOCSTART 55
             :end-before: DOCEND 55
             :dedent: 12
+
+**Known limitations:**
+
+*Notary change:* It is likely the case that users of reference states do not have permission to change the notary assigned
+to a reference state. Even if users *did* have this permission the result would likely be a bunch of
+notary change races. As such, if a reference state is added to a transaction which is assigned to a
+different notary to the input and output states then all those inputs and outputs must be moved to the
+notary which the reference state uses.
+
+If two or more reference states assigned to different notaries are added to a transaction then it follows
+that this transaction likely *cannot* be committed to the ledger as it unlikely that the party using the
+reference state can change the assigned notary for one of the reference states.
+
+As such, if reference states assigned to multiple different notaries are added to a transaction builder
+then the check below will fail.
 
 Output states
 ^^^^^^^^^^^^^

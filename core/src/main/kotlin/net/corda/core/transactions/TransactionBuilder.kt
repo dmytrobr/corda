@@ -9,10 +9,7 @@ import net.corda.core.crypto.SignableData
 import net.corda.core.crypto.SignatureMetadata
 import net.corda.core.identity.Party
 import net.corda.core.internal.FlowStateMachine
-import net.corda.core.node.NetworkParameters
-import net.corda.core.node.ServiceHub
-import net.corda.core.node.ServicesForResolution
-import net.corda.core.node.checkVersion
+import net.corda.core.node.*
 import net.corda.core.node.services.AttachmentId
 import net.corda.core.node.services.KeyManagementService
 import net.corda.core.serialization.SerializationContext
@@ -168,35 +165,37 @@ open class TransactionBuilder @JvmOverloads constructor(
     /**
      * Adds a reference input [StateRef] to the transaction.
      *
-     * This feature was added in version 4 of Corda, so is disabled for any Corda networks with a minimum platform
-     * version less than 4.
+     * This feature was added in version 4 of Corda, so will throw an exception for any Corda networks with a minimum
+     * platform version less than 4.
+     *
+     * @throws UncheckedVersionException
      */
     open fun addReferenceState(referencedStateAndRef: ReferencedStateAndRef<*>): TransactionBuilder {
-        return checkVersion(requiredMinimumVersion = 4) {
-            val stateAndRef = referencedStateAndRef.stateAndRef
-            referencesWithTransactionState.add(stateAndRef.state)
+        PlatformVersionInfo.checkMinimumPlatformVersion(requiredMinimumPlatformVersion = 4)
 
-            // It is likely the case that users of reference states do not have permission to change the notary assigned
-            // to a reference state. Even if users _did_ have this permission the result would likely be a bunch of
-            // notary change races. As such, if a reference state is added to a transaction which is assigned to a
-            // different notary to the input and output states then all those inputs and outputs must be moved to the
-            // notary which the reference state uses.
-            //
-            // If two or more reference states assigned to different notaries are added to a transaction then it follows
-            // that this transaction likely _cannot_ be committed to the ledger as it unlikely that the party using the
-            // reference state can change the assigned notary for one of the reference states.
-            //
-            // As such, if reference states assigned to multiple different notaries are added to a transaction builder
-            // then the check below will fail.
-            check(checkReferencesUseSameNotary()) {
-                "Transactions with reference states using multiple different notaries are unsupported."
-            }
+        val stateAndRef = referencedStateAndRef.stateAndRef
+        referencesWithTransactionState.add(stateAndRef.state)
 
-            checkNotary(stateAndRef)
-            references.add(stateAndRef.ref)
-            checkForInputsAndReferencesOverlap()
-            this
+        // It is likely the case that users of reference states do not have permission to change the notary assigned
+        // to a reference state. Even if users _did_ have this permission the result would likely be a bunch of
+        // notary change races. As such, if a reference state is added to a transaction which is assigned to a
+        // different notary to the input and output states then all those inputs and outputs must be moved to the
+        // notary which the reference mstate uses.
+        //
+        // If two or more reference states assigned to different notaries are added to a transaction then it follows
+        // that this transaction likely _cannot_ be committed to the ledger as it unlikely that the party using the
+        // reference state can change the assigned notary for one of the reference states.
+        //
+        // As such, if reference states assigned to multiple different notaries are added to a transaction builder
+        // then the check below will fail.
+        check(checkReferencesUseSameNotary()) {
+            "Transactions with reference states using multiple different notaries are currently unsupported."
         }
+
+        checkNotary(stateAndRef)
+        references.add(stateAndRef.ref)
+        checkForInputsAndReferencesOverlap()
+        return this
     }
 
     /** Adds an input [StateRef] to the transaction. */

@@ -15,7 +15,7 @@ import java.util.function.Predicate
 @KeepForDJVM
 @DoNotImplement
 abstract class BaseTransaction : NamedByHash {
-    /** A list of reusable reference data states which can be referred to by other contacts in this transaction. */
+    /** A list of reusable reference data states which can be referred to by other contracts in this transaction. */
     abstract val references: List<*>
     /** The inputs of this transaction. Note that in BaseTransaction subclasses the type of this list may change! */
     abstract val inputs: List<*>

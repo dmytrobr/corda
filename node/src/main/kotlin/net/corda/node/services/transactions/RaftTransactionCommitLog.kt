@@ -15,7 +15,6 @@ import net.corda.core.contracts.StateRef
 import net.corda.core.contracts.TimeWindow
 import net.corda.core.crypto.SecureHash
 import net.corda.core.crypto.sha256
-import net.corda.core.flows.ConsumedStateType
 import net.corda.core.flows.NotaryError
 import net.corda.core.flows.StateConsumptionDetails
 import net.corda.core.internal.VisibleForTesting
@@ -77,7 +76,7 @@ class RaftTransactionCommitLog<E, EK>(
     fun commitTransaction(raftCommit: Commit<Commands.CommitTransaction>): NotaryError? {
         val conflictingStates = LinkedHashMap<StateRef, StateConsumptionDetails>()
 
-        fun checkConflict(states: List<StateRef>, type: ConsumedStateType) = states.forEach { stateRef ->
+        fun checkConflict(states: List<StateRef>, type: StateConsumptionDetails.ConsumedStateType) = states.forEach { stateRef ->
             map[stateRef]?.let { conflictingStates[stateRef] = StateConsumptionDetails(it.second.sha256(), type) }
         }
 
@@ -88,8 +87,8 @@ class RaftTransactionCommitLog<E, EK>(
                 logRequest(commitCommand)
                 val txId = commitCommand.txId
                 log.debug("State machine commit: attempting to store entries with keys (${commitCommand.states.joinToString()})")
-                checkConflict(commitCommand.states, ConsumedStateType.INPUT_STATE)
-                checkConflict(commitCommand.references, ConsumedStateType.REFERENCE_INPUT_STATE)
+                checkConflict(commitCommand.states, StateConsumptionDetails.ConsumedStateType.INPUT_STATE)
+                checkConflict(commitCommand.references, StateConsumptionDetails.ConsumedStateType.REFERENCE_INPUT_STATE)
                 if (conflictingStates.isNotEmpty()) {
                     if (isConsumedByTheSameTx(commitCommand.txId.sha256(), conflictingStates)) {
                         null

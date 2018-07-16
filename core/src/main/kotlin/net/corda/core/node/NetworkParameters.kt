@@ -106,27 +106,38 @@ data class NetworkParameters(
 @CordaSerializable
 data class NotaryInfo(val identity: Party, val validating: Boolean)
 
-/**
- * Used for restricting the use of features which require a platform version greater than the current minimum platform
- * version for the network.
- *
- * @param requiredMinimumVersion the minimum platform version which this feature requires.
- * @param block the code block which is dependent on a potentially greater minimum platform version than the network's.
- */
-fun <T : Any> checkVersion(requiredMinimumVersion: Int, block: () -> T): T {
-    val minimumPlatformVersion = platformVersionInfo.minimumPlatformVersion
-    return if (requiredMinimumVersion > minimumPlatformVersion) {
-        throw UncheckedVersionException("This feature is disabled until network minimum platform version is " +
-                "increased from $minimumPlatformVersion to $requiredMinimumVersion.")
-    } else {
-        block()
+/** For use by the [checkVersion] function. */
+data class PlatformVersionInfo(val minimumPlatformVersion: Int) {
+    companion object {
+        /**
+         * Used for restricting the use of features which require a platform version greater than the current minimum
+         * platform version for the network.
+         *
+         * @param requiredMinimumVersion the minimum platform version which this feature requires.
+         */
+        fun checkMinimumPlatformVersion(requiredMinimumPlatformVersion: Int) {
+            val minimumPlatformVersion = platformVersionInfo.minimumPlatformVersion
+            if (requiredMinimumPlatformVersion > minimumPlatformVersion) {
+                throw UncheckedVersionException("This feature is disabled until network minimum platform version is " +
+                        "increased from $minimumPlatformVersion to $requiredMinimumPlatformVersion.")
+            }
+        }
     }
 }
 
-/** For use by the [checkVersion] function. */
-data class PlatformVersionInfo(val minimumPlatformVersion: Int)
+/**
+ * This variable, which is set in [AbstractNode] during node startup, is set to the platform version of the node. It is
+ * made available as a thread local variable so that it is easily accessible.
+ *
+ * WARNING: When using the MockNetwork in single threaded mode (threadPerNode = false) each node must run with the same
+ * platform version. To run MockNodes with different platform versions for testing, the MockNetwork must be run in
+ * multi-threaded mode (threadPerNode = true).
+ */
+private val _platformVersionInfo: InheritableThreadLocal<PlatformVersionInfo> = InheritableThreadLocal()
 
-/** This variable is set in [AbstractNode] during node startup. */
-lateinit var platformVersionInfo: PlatformVersionInfo
+var platformVersionInfo: PlatformVersionInfo
+    get() = _platformVersionInfo.get()
+            ?: error("Platform version info has not yet been set or its not available on this thread.")
+    set(platformVersion) = _platformVersionInfo.set(platformVersion)
 
 class UncheckedVersionException(message: String) : RuntimeException(message)
